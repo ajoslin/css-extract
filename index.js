@@ -49,6 +49,8 @@ function cssExtract (bundle, opts) {
 // extract css from chunks
 // obj -> str
 function extract (chunk) {
+  if (String(chunk.source).indexOf('insert-css') === -1) return ''
+  
   const css = []
   const ast = falafel(chunk.source, { ecmaVersion: 6 }, walk)
   chunk.source = ast.toString()
