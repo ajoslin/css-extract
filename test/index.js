@@ -31,27 +31,25 @@ test('css-extract', function (t) {
     }
   })
 
-  t.test('should write file', function (t) {
-    t.plan(3)
-    tmpDir({unsafeCleanup: true}, onDir)
+  t.test('should leave non-matching insert-css statements inline', function (t) {
+    t.plan(4)
 
-    function onDir (err, dir, cleanup) {
+    browserify(path.join(__dirname, 'manual-insert-source.js'))
+      .transform('sheetify/transform')
+      .plugin(cssExtract, { out: readCss })
+      .bundle(readJs)
+
+    function readCss () {
+      return bl(function (err, data) {
+        t.ifError(err, 'no error')
+        t.equal(String(data), '', 'no css extracted')
+      })
+    }
+
+    function readJs (err, data) {
       t.ifError(err, 'no error')
-      const outFile = path.join(dir, 'out.css')
-
-      browserify(path.join(__dirname, 'source.js'))
-        .transform('sheetify/transform')
-        .plugin(cssExtract, { out: outFile })
-        .bundle(function (err) {
-          t.ifError(err, 'no bundle error')
-
-          const exPath = path.join(__dirname, './expected.css')
-          const expected = fs.readFileSync(exPath, 'utf8').trim()
-          const actual = fs.readFileSync(outFile, 'utf8').trim()
-          t.equal(expected, actual, 'all css written to file')
-
-          cleanup()
-        })
+      const source = fs.readFileSync(path.join(__dirname, 'manual-insert-source.js'), 'utf8')
+      t.ok(String(data).indexOf(String(source)) !== -1, 'source is still in built bundle')
     }
   })
 })
